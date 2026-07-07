@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AeroCalendar — Mobile Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      
+      /* =========================================================================
+         BLUE GRADIENT BACKGROUND CONFIGURATION 
+         (90% Deep Black transitioning into a 10% smoothly blended blue tone)
+         ========================================================================= */
+      background: linear-gradient(to bottom, #000000 90%, #021124 100%);
+      background-attachment: fixed;
+    }
+
+    /* Custom high-fidelity scrolls for panels */
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #1f1f29;
+      border-radius: 99px;
+    }
+  </style>
+</head>
+<body class="text-[#e4e4e7] min-h-screen flex items-start justify-center p-3 antialiased select-none">
+
+  <div id="master-workspace" class="w-full max-w-md bg-[#050507]/95 border border-[#16161e] rounded-3xl shadow-2xl shadow-black flex flex-col min-h-[94vh] backdrop-blur-md relative p-4 space-y-4">
+    
+    <div class="flex items-center justify-between gap-2 shrink-0">
+      <div>
+        <div class="flex items-center gap-1.5 mb-0.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+          <span class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest font-mono">Aero Mobile</span>
+        </div>
+        <h1 id="month-year-display" class="text-lg font-bold text-white tracking-tight">---</h1>
+      </div>
+      
+      <div class="flex items-center gap-1 bg-[#0b0b0e] border border-[#16161f] p-1 rounded-xl shadow-inner">
+        <button onclick="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#13131a] text-[#a1a1aa] hover:text-white transition active:scale-95">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        </button>
+        <button onclick="resetToToday()" class="text-[11px] font-semibold px-2.5 h-8 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-[#13131a] transition">Today</button>
+        <button onclick="changeMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#13131a] text-[#a1a1aa] hover:text-white transition active:scale-95">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="shrink-0">
+      <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[#4a4a52] uppercase tracking-wider mb-2 font-mono">
+        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+      </div>
+      <div id="calendar-days-matrix" class="grid grid-cols-7 gap-1.5"></div>
+    </div>
+
+    <div class="grow flex flex-col min-h-[200px]">
+      <div class="border-b border-[#14141a] pb-2 mb-2 flex items-center justify-between shrink-0">
+        <h2 class="text-xs font-bold text-white tracking-tight uppercase tracking-wider text-[#a1a1aa]">Today's Agenda</h2>
+        <span id="feed-date-string" class="text-[9px] font-bold text-indigo-400 font-mono tracking-wider bg-indigo-950/20 border border-indigo-900/30 px-2 py-0.5 rounded-md uppercase">---</span>
+      </div>
+
+      <div id="task-feed-bucket" class="grow overflow-y-auto pr-0.5 space-y-2 custom-scroll max-h-[260px]">
+        </div>
+    </div>
+
+    <div class="border-t border-[#14141a] pt-3 shrink-0 space-y-2">
+      <h3 class="text-[9px] font-bold text-[#4a4a52] uppercase tracking-wider font-mono">Custom Classes</h3>
+      <div class="flex flex-col gap-2">
+        <div id="categories-dock" class="flex flex-wrap gap-1.5"></div>
+        
+        <div class="flex items-center gap-1.5 bg-[#0b0b0e] border border-[#16161f] p-1 rounded-xl w-full">
+          <input type="text" id="new-cat-name" placeholder="Add custom category..." class="bg-transparent text-xs text-white px-2 focus:outline-none grow placeholder-[#3a3a42]">
+          <input type="color" id="new-cat-color" value="#6366f1" class="w-5 h-5 bg-transparent border-none rounded-md cursor-pointer shrink-0">
+          <button onclick="createNewCategory()" class="w-6 h-6 bg-indigo-600 text-white rounded-lg flex items-center justify-center transition shrink-0 active:scale-90">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="add-task-modal" class="hidden absolute w-[270px] bg-[#0c0c10] border border-[#22222e] rounded-xl p-3.5 shadow-2xl shadow-black z-50 transition-all duration-150">
+      <div class="mb-2">
+        <span id="modal-date-display" class="text-[9px] font-bold text-indigo-400 font-mono tracking-wider uppercase">---</span>
+        <h3 class="text-xs font-bold text-white tracking-tight mt-0.5">Schedule Agenda Node</h3>
+      </div>
+
+      <form id="task-composition-form" onsubmit="saveComposedTask(event)" class="space-y-2">
+        <div>
+          <input type="text" id="task-title-input" required placeholder="Describe task..." class="w-full bg-[#13131a] border border-[#1c1c26] focus:border-indigo-500 rounded-lg p-2 text-xs text-white placeholder-[#424249] focus:outline-none transition">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <input type="time" id="task-time-input" required class="w-full bg-[#13131a] border border-[#1c1c26] focus:border-indigo-500 rounded-lg p-2 text-xs text-white focus:outline-none transition">
+          </div>
+          <div>
+            <select id="task-category-input" required class="w-full bg-[#13131a] border border-[#1c1c26] focus:border-indigo-500 rounded-lg p-2 text-xs text-[#a1a1aa] focus:outline-none transition">
+              </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-1.5 pt-1">
+          <button type="button" onclick="closeSchedulerModal()" class="px-2.5 py-1.5 rounded-lg border border-[#1c1c26] text-[10px] font-semibold text-[#a1a1aa] transition">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] font-semibold transition active:scale-95">Save</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    // Global App Configuration State Architecture
+    let focusDateInstance = new Date(2026, 6, 7); // Anchored to July 2026 context
+    let highlightedDateStr = "2026-07-07";
+    
+    // Core Registry Databases with Safe local file system protection fallback
+    let tasksVault = {};
+    let categoriesVault = {
+      'personal': { name: 'Personal', color: '#a855f7' },
+      'work':     { name: 'Work',     color: '#10b981' },
+      'home':     { name: 'Home',     color: '#06b6d4' },
+      'urgent':   { name: 'Urgent',   color: '#f43f5e' }
+    };
+
+    // Safe storage validation routine
+    try {
+      const savedTasks = localStorage.getItem('aero_tasks_vault');
+      if (savedTasks) tasksVault = JSON.parse(savedTasks);
+      
+      const savedCats = localStorage.getItem('aero_categories_vault');
+      if (savedCats) categoriesVault = JSON.parse(savedCats);
+    } catch (storageError) {
+      console.warn("Storage restricted in local file environments. Operating in-memory mode.");
+    }
+
+    const monthNamesRef = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    // App Initialization Lifecycle Hook
+    window.addEventListener('DOMContentLoaded', () => {
+      const deviceToday = new Date();
+      const baseYear = deviceToday.getFullYear() === 2026 ? deviceToday.getFullYear() : 2026;
+      const baseMonth = deviceToday.getFullYear() === 2026 ? deviceToday.getMonth() : 6;
+      const baseDay = deviceToday.getFullYear() === 2026 ? deviceToday.getDate() : 7;
+      
+      focusDateInstance = new Date(baseYear, baseMonth, 1);
+      highlightedDateStr = convertToDataKey(baseYear, baseMonth, baseDay);
+      
+      syncMasterApplicationUI();
+    });
+
+    function convertToDataKey(y, m, d) {
+      return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    function syncMasterApplicationUI() {
+      renderCalendarViewport();
+      renderCategoriesDock();
+      renderRightTaskFeed();
+      saveStateToLocalStorage();
+    }
+
+    // Main Calendar Core Matrix Population Loop
+    function renderCalendarViewport() {
+      const targetGrid = document.getElementById('calendar-days-matrix');
+      targetGrid.innerHTML = '';
+
+      const y = focusDateInstance.getFullYear();
+      const m = focusDateInstance.getMonth();
+
+      document.getElementById('month-year-display').innerText = `${monthNamesRef[m]} ${y}`;
+
+      const firstWeekdayOffset = new Date(y, m, 1).getDay();
+      const totalDaysInCurrentMonth = new Date(y, m + 1, 0).getDate();
+      const totalDaysInPriorMonth = new Date(y, m, 0).getDate();
+
+      // Block Phase 1: Leading Dead Cell Trailing Padding
+      for (let i = firstWeekdayOffset; i > 0; i--) {
+        const trailingDayNum = totalDaysInPriorMonth - i + 1;
+        const padCell = document.createElement('div');
+        padCell.className = "aspect-square flex items-center justify-center text-[11px] font-medium text-[#14141a] pointer-events-none select-none";
+        padCell.innerText = trailingDayNum;
+        targetGrid.appendChild(padCell);
+      }
+
+      // Block Phase 2: Standard Live Cell Interaction Mapping
+      for (let day = 1; day <= totalDaysInCurrentMonth; day++) {
+        const loopDateKey = convertToDataKey(y, m, day);
+        const isActiveSelection = (loopDateKey === highlightedDateStr);
+        
+        const cellButton = document.createElement('button');
+        cellButton.type = "button";
+        cellButton.className = `aspect-square rounded-xl border flex flex-col items-center justify-between p-1.5 text-xs font-semibold transition relative transform active:scale-90`;
+
+        if (isActiveSelection) {
+          cellButton.className += " bg-indigo-600/10 border-indigo-500 text-white shadow-lg shadow-indigo-950/20";
+        } else {
+          cellButton.className += " bg-[#09090c] border-[#13131a] text-[#a1a1aa]";
+        }
+
+        cellButton.onclick = (e) => {
+          if(highlightedDateStr === loopDateKey) {
+            openSchedulerModal(loopDateKey, cellButton);
+          } else {
+            highlightedDateStr = loopDateKey;
+            closeSchedulerModal();
+            syncMasterApplicationUI();
+          }
+        };
+
+        const dayLabel = document.createElement('span');
+        dayLabel.innerText = day;
+        cellButton.appendChild(dayLabel);
+
+        // Individual Dynamic Multi-Dot Matrix Placement
+        const dayTasks = tasksVault[loopDateKey] || [];
+        if (dayTasks.length > 0) {
+          const indicatorsContainer = document.createElement('div');
+          indicatorsContainer.className = "flex flex-wrap gap-0.5 items-center justify-center w-full mt-auto pt-0.5 max-h-[10px] overflow-hidden";
+          
+          dayTasks.forEach(task => {
+            const catMeta = categoriesVault[task.catId];
+            if(catMeta) {
+              const miniDot = document.createElement('span');
+              miniDot.className = "w-1 h-1 rounded-full shrink-0";
+              miniDot.style.backgroundColor = catMeta.color;
+              miniDot.style.boxShadow = `0 0 3px ${catMeta.color}`;
+              indicatorsContainer.appendChild(miniDot);
+            }
+          });
+          cellButton.appendChild(indicatorsContainer);
+        }
+
+        targetGrid.appendChild(cellButton);
+      }
+
+      // Block Phase 3: Trailing End Cell Padding Void Correction 
+      const activeCellTallyCount = firstWeekdayOffset + totalDaysInCurrentMonth;
+      const finalPaddingTallyRequired = (activeCellTallyCount <= 35 ? 35 : 42) - activeCellTallyCount;
+
+      for (let nextDay = 1; nextDay <= finalPaddingTallyRequired; nextDay++) {
+        const forwardPadCell = document.createElement('div');
+        forwardPadCell.className = "aspect-square flex items-center justify-center text-[11px] font-medium text-[#14141a] pointer-events-none select-none";
+        forwardPadCell.innerText = nextDay;
+        targetGrid.appendChild(forwardPadCell);
+      }
+    }
+
+    // Category Interface Components Binder
+    function renderCategoriesDock() {
+      const dock = document.getElementById('categories-dock');
+      dock.innerHTML = '';
+
+      Object.keys(categoriesVault).forEach(id => {
+        const category = categoriesVault[id];
+        
+        const pill = document.createElement('div');
+        pill.className = "flex items-center gap-1 text-[10px] font-semibold bg-[#0b0b0e] border border-[#16161f] pl-2 pr-1.5 py-0.5 rounded-lg shadow-xs";
+        
+        const dynamicIndicatorColorDot = document.createElement('span');
+        dynamicIndicatorColorDot.className = "w-1.5 h-1.5 rounded-full";
+        dynamicIndicatorColorDot.style.backgroundColor = category.color;
+        
+        const nameNode = document.createElement('span');
+        nameNode.className = "text-[#e4e4e7]";
+        nameNode.innerText = category.name;
+
+        pill.appendChild(dynamicIndicatorColorDot);
+        pill.appendChild(nameNode);
+
+        const immutableSystemDefaults = ['personal', 'work', 'home', 'urgent'];
+        if (!immutableSystemDefaults.includes(id)) {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = "button";
+          deleteBtn.className = "text-[#52525b] hover:text-rose-400 p-0.5 ml-0.5 rounded transition";
+          deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-2.5 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+          deleteBtn.onclick = () => removeDynamicCategory(id);
+          pill.appendChild(deleteBtn);
+        }
+
+        dock.appendChild(pill);
+      });
+    }
+
+    // Dynamic Timeline Feed Component Engine
+    function renderRightTaskFeed() {
+      const bucket = document.getElementById('task-feed-bucket');
+      bucket.innerHTML = '';
+
+      const parsedDateSegments = highlightedDateStr.split('-');
+      const formattedCalendarDisplayHeaderString = new Date(parsedDateSegments[0], parsedDateSegments[1] - 1, parsedDateSegments[2])
+        .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      document.getElementById('feed-date-string').innerText = formattedCalendarDisplayHeaderString;
+
+      const itemsList = tasksVault[highlightedDateStr] || [];
+
+      if (itemsList.length === 0) {
+        bucket.innerHTML = `
+          <div class="py-6 border border-dashed border-[#16161f] rounded-xl flex flex-col items-center justify-center text-center p-4">
+            <span class="text-xs font-semibold text-[#4a4a52]">Horizon is Quiet</span>
+            <p class="text-[10px] text-[#3a3a42] mt-0.5">No tasks logged for today.</p>
+          </div>`;
+        return;
+      }
+
+      const chronologicalSortedArray = [...itemsList].sort((a, b) => a.time.localeCompare(b.time));
+
+      chronologicalSortedArray.forEach(task => {
+        const catMeta = categoriesVault[task.catId] || { name: 'Undefined', color: '#71717a' };
+        
+        const itemCard = document.createElement('div');
+        itemCard.className = "bg-[#0b0b0e] border border-[#16161f] p-3 rounded-xl flex items-center justify-between gap-3 shadow-sm relative overflow-hidden";
+        
+        const accentStrip = document.createElement('span');
+        accentStrip.className = "absolute left-0 top-0 bottom-0 w-1";
+        accentStrip.style.backgroundColor = catMeta.color;
+        itemCard.appendChild(accentStrip);
+
+        const coreContentWrapper = document.createElement('div');
+        coreContentWrapper.className = "space-y-1 max-w-[80%] pl-1";
+
+        const taskTitleNode = document.createElement('h4');
+        taskTitleNode.className = "text-xs font-semibold text-white truncate";
+        taskTitleNode.innerText = task.title;
+        
+        const footerMetaRow = document.createElement('div');
+        footerMetaRow.className = "flex items-center gap-1.5 text-[9px] text-[#71717a] font-mono";
+        
+        footerMetaRow.innerHTML = `
+          <span class="text-indigo-400/80">${task.time}</span>
+          <span>&bull;</span>
+          <span class="font-sans px-1 rounded-[3px] text-[8px] uppercase font-bold" style="color: ${catMeta.color}; background-color: ${catMeta.color}15; border: 1px solid ${catMeta.color}20">
+            ${catMeta.name}
+          </span>`;
+
+        coreContentWrapper.appendChild(taskTitleNode);
+        coreContentWrapper.appendChild(footerMetaRow);
+
+        const destructiveActionPurgeButton = document.createElement('button');
+        destructiveActionPurgeButton.type = "button";
+        destructiveActionPurgeButton.className = "text-[#3a3a42] hover:text-rose-400 p-1.5 rounded-lg transition shrink-0";
+        destructiveActionPurgeButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>`;
+        destructiveActionPurgeButton.onclick = () => removeTaskElementNode(task.id);
+
+        itemCard.appendChild(coreContentWrapper);
+        itemCard.appendChild(destructiveActionPurgeButton);
+        bucket.appendChild(itemCard);
+      });
+    }
+
+    // Navigation & Mutator Actions
+    function changeMonth(stepDirectionVector) {
+      focusDateInstance.setMonth(focusDateInstance.getMonth() + stepDirectionVector);
+      closeSchedulerModal();
+      renderCalendarViewport();
+    }
+
+    function resetToToday() {
+      const today = new Date();
+      const baseYear = today.getFullYear() === 2026 ? today.getFullYear() : 2026;
+      const baseMonth = today.getFullYear() === 2026 ? today.getMonth() : 6;
+      const baseDay = today.getFullYear() === 2026 ? today.getDate() : 7;
+
+      focusDateInstance = new Date(baseYear, baseMonth, 1);
+      highlightedDateStr = convertToDataKey(baseYear, baseMonth, baseDay);
+      closeSchedulerModal();
+      syncMasterApplicationUI();
+    }
+
+    function createNewCategory() {
+      const nameInput = document.getElementById('new-cat-name');
+      const colorInput = document.getElementById('new-cat-color');
+      const nameString = nameInput.value.trim();
+
+      if (!nameString) return;
+      
+      const generatedId = 'cat_' + Date.now();
+      categoriesVault[generatedId] = { name: nameString, color: colorInput.value };
+
+      nameInput.value = '';
+      syncMasterApplicationUI();
+    }
+
+    function remov
