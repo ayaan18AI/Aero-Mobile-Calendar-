@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AeroCalendar — Ayaan's Workspace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #000000 90%, #021124 100%);
+      background-attachment: fixed;
+    }
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1f1f29; border-radius: 99px; }
+  </style>
+</head>
+<body class="text-[#e4e4e7] min-h-screen flex items-start justify-center p-3 antialiased select-none">
+
+  <div class="w-full max-w-md flex flex-col space-y-3">
+    
+    <div class="flex items-center justify-between px-1 shrink-0">
+      <div>
+        <div class="flex items-center gap-1.5 mb-0.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+          <span class="text-[9px] font-bold text-indigo-400 uppercase tracking-widest font-mono">Aero Workspace</span>
+        </div>
+        <h1 class="text-xl font-bold text-white tracking-tight">Welcome, Ayaan!</h1>
+      </div>
+      
+      <button id="btn-view-toggle" class="whitespace-nowrap text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl bg-indigo-950/40 border border-indigo-900/40 text-indigo-400 hover:bg-indigo-900/30 transition-all duration-150 active:scale-95">
+        Task Only
+      </button>
+    </div>
+
+    <div id="master-workspace" class="w-full bg-[#050507]/95 border border-[#16161e] rounded-3xl shadow-2xl shadow-black flex flex-col min-h-[85vh] backdrop-blur-md relative p-4 space-y-4">
+      
+      <div class="flex items-center justify-between gap-2 shrink-0">
+        <h2 id="month-year-display" class="text-base font-bold text-white tracking-tight">Loading...</h2>
+        
+        <div id="calendar-controls" class="flex items-center gap-1 bg-[#0b0b0e] border border-[#16161f] p-1 rounded-xl shadow-inner">
+          <button id="btn-prev-month" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#13131a] text-[#a1a1aa] hover:text-white transition active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+          </button>
+          <button id="btn-today" class="text-[11px] font-semibold px-2.5 h-8 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-[#13131a] transition">Today</button>
+          <button id="btn-next-month" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#13131a] text-[#a1a1aa] hover:text-white transition active:scale-95">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="calendar-grid-wrapper" class="shrink-0 space-y-2">
+        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[#4a4a52] uppercase tracking-wider font-mono">
+          <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+        </div>
+        <div id="calendar-days-matrix" class="grid grid-cols-7 gap-1.5"></div>
+      </div>
+
+      <div class="grow flex flex-col min-h-[180px]">
+        <div class="border-b border-[#14141a] pb-2 mb-2 flex items-center justify-between shrink-0">
+          <h3 id="feed-header-title" class="text-xs font-bold uppercase tracking-wider text-[#a1a1aa]">Today's Agenda</h3>
+          <span id="feed-date-string" class="text-[9px] font-bold text-indigo-400 font-mono tracking-wider bg-indigo-950/20 border border-indigo-900/30 px-2 py-0.5 rounded-md uppercase">---</span>
+        </div>
+        <div id="task-feed-bucket" class="grow overflow-y-auto pr-0.5 space-y-2 custom-scroll max-h-[280px]"></div>
+      </div>
+
+      <div class="border-t border-[#14141a] pt-3 shrink-0 space-y-2">
+        <h4 class="text-[9px] font-bold text-[#4a4a52] uppercase tracking-wider font-mono">Custom Classes</h4>
+        <div class="flex flex-col gap-2">
+          <div id="categories-dock" class="flex flex-wrap gap-1.5"></div>
+          <div class="flex items-center gap-1.5 bg-[#0b0b0e] border border-[#16161f] p-1 rounded-xl w-full">
+            <input type="text" id="new-cat-name" placeholder="Add custom category..." class="bg-transparent text-xs text-white px-2 focus:outline-none grow placeholder-[#3a3a42]">
+            <input type="color" id="new-cat-color" value="#6366f1" class="w-5 h-5 bg-transparent border-none rounded-md cursor-pointer shrink-0">
+            <button id="btn-add-cat" class="w-6 h-6 bg-indigo-600 text-white rounded-lg flex items-center justify-center transition shrink-0 active:scale-90">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="add-task-modal" class="hidden absolute w-[270px] bg-[#0c0c10] border border-[#22222e] rounded-xl p-3.5 shadow-2xl shadow-black z-50 transition-all duration-150">
+        <div class="mb-2">
+          <span id="modal-date-display" class="text-[9px] font-bold text-indigo-400 font-mono tracking-wider uppercase">---</span>
+          <h3 id="modal-window-title" class="text-xs font-bold text-white tracking-tight mt-0.5">Schedule Agenda Node</h3>
+        </div>
+        <form id="task-composition-form" class="space-y-2">
+          <div>
+            <input type="text" id="task-title-input" required placeholder="Describe task..." class="w-full bg-[#13131a] border border-[#1c1c26] focus:border-indigo-500 rounded-lg p-2 text-xs text-white placeholder-[#424249] focus:outline-none transition">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[9px] font-bold text-[#4a4a52] uppercase block mb-1 tracking-wider font-mono">Add Time</label>
+              <input type="time" id="task-time-input" required class="w-full bg-[#13131a] border border-[#1c1c26] focus:border-indigo-500 rounded-lg p-2 text-xs text-white focus:outline-none transition">
+            </div>
+            <div>
+              <label class="text-[9px] font-bold text-[#4a4a52] uppercase block mb-1 tracking-wider font-mono">Category</label>
+              <select id="task-category-input" required class="w-full bg-[#13131a] border border-[#1c1c26] focus:border-indigo-500 rounded-lg p-2 text-xs text-[#a1a1aa] focus:outline-none transition"></select>
+            </div>
+          </div>
+          <div class="flex items-center justify-end gap-1.5 pt-1">
+            <button type="button" id="btn-close-modal" class="px-2.5 py-1.5 rounded-lg border border-[#1c1c26] text-[10px] font-semibold text-[#a1a1aa] transition">Cancel</button>
+            <button type="submit" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] font-semibold transition active:scale-95">Save</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      let focusDateInstance = new Date();
+      focusDateInstance.setDate(1); 
+      
+      let highlightedDateStr = "";
+      let currentViewMode = "calendar"; 
+      let tasksVault = {};
+      let categoriesVault = {
+        'urgent':   { name: 'Urgent',   color: '#f43f5e' },
+        'work':     { name: 'Work',     color: '#10b981' },
+        'home':     { name: 'Home',     color: '#06b6d4' },
+        'personal': { name: 'Personal', color: '#a855f7' }
+      };
+
+      let activeEditingTaskId = null;
+      let activeEditingTaskDate = null;
+
+      try {
+        const savedTasks = localStorage.getItem('aero_tasks_vault');
+        if (savedTasks) tasksVault = JSON.parse(savedTasks);
+        const savedCats = localStorage.getItem('aero_categories_vault');
+        if (savedCats) categoriesVault = JSON.parse(savedCats);
+      } catch (e) {}
+
+      const monthNamesRef = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+      function convertToDataKey(y, m, d) {
+        return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      }
+
+      function generateRelativeCountdownText(dateKeyStr, timeStr) {
+        if (!dateKeyStr || !timeStr || !timeStr.includes(':')) return "Today";
+        try {
+          const liveClock = new Date();
+          const dateParts = dateKeyStr.split('-');
+          const timeParts = timeStr.split(':');
+          if (dateParts.length < 3 || timeParts.length < 2) return "Today";
+
+          const destinationTimestamp = new Date(
+            parseInt(dateParts[0]), 
+            parseInt(dateParts[1]) - 1, 
+            parseInt(dateParts[2]), 
+            parseInt(timeParts[0]), 
+            parseInt(timeParts[1])
+          );
+
+          const deltaMilliseconds = destinationTimestamp - liveClock;
+          if (deltaMilliseconds <= 0) return "Passed";
+
+          const exactRemainingHours = Math.floor(deltaMilliseconds / (1000 * 60 * 60));
+          const exactRemainingDays = Math.floor(deltaMilliseconds / (1000 * 60 * 60 * 24));
+
+          if (exactRemainingDays > 0) {
+            return exactRemainingDays === 1 ? "1 day to go" : `${exactRemainingDays} days to go`;
+          } else if (exactRemainingHours > 0) {
+            return exactRemainingHours === 1 ? "1 hour to go" : `${exactRemainingHours} hours to go`;
+          } else {
+            const remainingMinutes = Math.floor(deltaMilliseconds / (1000 * 60));
+            return remainingMinutes <= 1 ? "1 min to go" : `${remainingMinutes} mins to go`;
+          }
+        } catch(err) {
+          return "Today";
+        }
+      }
+
+      function syncMasterApplicationUI() {
+        renderCalendarViewport();
+        renderCategoriesDock();
+        renderRightTaskFeed();
+        try {
+          localStorage.setItem('aero_tasks_vault', JSON.stringify(tasksVault));
+          localStorage.setItem('aero_categories_vault', JSON.stringify(categoriesVault));
+        } catch(e) {}
+      }
+
+      function renderCalendarViewport() {
+        const targetGrid = document.getElementById('calendar-days-matrix');
+        const displayLabel = document.getElementById('month-year-display');
+        if (!targetGrid || !displayLabel) return;
+        targetGrid.innerHTML = '';
+
+        const y = focusDateInstance.getFullYear();
+        const m = focusDateInstance.getMonth();
+        displayLabel.innerText = `${monthNamesRef[m]} ${y}`;
+
+        const firstWeekdayOffset = new Date(y, m, 1).getDay();
+        const totalDaysInCurrentMonth = new Date(y, m + 1, 0).getDate();
+        const totalDaysInPriorMonth = new Date(y, m, 0).getDate();
+
+        for (let i = firstWeekdayOffset; i > 0; i--) {
+          const trailingDayNum = totalDaysInPriorMonth - i + 1;
+          const padCell = document.createElement('div');
+          padCell.className = "aspect-square flex items-center justify-center text-[11px] font-medium text-[#14141a] pointer-events-none select-none";
+          padCell.innerText = trailingDayNum;
+          targetGrid.appendChild(padCell);
+        }
+
+        for (let day = 1; day <= totalDaysInCurrentMonth; day++) {
+          const loopDateKey = convertToDataKey(y, m, day);
+          const isActiveSelection = (loopDateKey === highlightedDateStr);
+          
+          const cellButton = document.createElement('button');
+          cellButton.type = "button";
+          cellButton.className = `aspect-square rounded-xl border flex flex-col items-center justify-between p-1.5 text-xs font-semibold transition relative transform active:scale-90 ${isActiveSelection ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-lg shadow-indigo-950/20' : 'bg-[#09090c] border-[#13131a] text-[#a1a1aa]'}`;
+
+          cellButton.onclick = () => {
+            if (highlightedDateStr === loopDateKey) {
+              openSchedulerModal(loopDateKey, cellButton);
+            } else {
+              highlightedDateStr = loopDateKey;
+              closeSchedulerModal();
+              syncMasterApplicationUI();
+            }
+          };
+
+          const dayLabel = document.createElement('span');
+          dayLabel.innerText = day;
+          cellButton.appendChild(dayLabel);
+
+          const dayTasks = tasksVault[loopDateKey] || [];
+          if (dayTasks.length > 0) {
+            const indicatorsContainer = document.createElement('div');
+            indicatorsContainer.className = "flex flex-wrap gap-0.5 items-center justify-center w-full mt-auto pt-0.5 max-h-[10px] overflow-hidden";
+            dayTasks.forEach(task => {
+              const catMeta = categoriesVault[task.catId];
+              if (catMeta) {
+                const miniDot = document.createElement('span');
+                miniDot.className = `w-1 h-1 rounded-full shrink-0 ${task.completed ? 'opacity-30' : ''}`;
+                miniDot.style.backgroundColor = catMeta.color;
+                indicatorsContainer.appendChild(miniDot);
+              }
+            });
+            cellButton.appendChild(indicatorsContainer);
+          }
+          targetGrid.appendChild(cellButton);
+        }
+
+        const activeCellTallyCount = firstWeekdayOffset + totalDaysInCurrentMonth;
+        const finalPaddingTallyRequired = (activeCellTallyCount <= 35 ? 35 : 42) - activeCellTallyCount;
+
+        for (let nextDay = 1; nextDay <= finalPaddingTallyRequired; nextDay++) {
+          const forwardPadCell = document.createElement('div');
+          forwardPadCell.className = "aspect-square flex items-center justify-center text-[11px] font-medium text-[#14141a] pointer-events-none select-none";
+          forwardPadCell.innerText = nextDay;
+          targetGrid.appendChild(forwardPadCell);
+        }
+      }
+
+      function renderCategoriesDock() {
+        const dock = document.getElementById('categories-dock');
+        if (!dock) return;
+        dock.innerHTML = '';
+
+        Object.keys(categoriesVault).forEach(id => {
+          const category = categoriesVault[id];
+          const pill = document.createElement('div');
+          pill.className = "flex items-center gap-1 text-[10px] font-semibold bg-[#0b0b0e] border border-[#16161f] pl-2 pr-1.5 py-0.5 rounded-lg";
+          
+          const dot = document.createElement('span');
+          dot.className = "w-1.5 h-1.5 rounded-full";
+          dot.style.backgroundColor = category.color;
+          
+          const txt = document.createElement('span');
+          txt.className = "text-[#e4e4e7]";
+          txt.innerText = category.name;
+
+          pill.appendChild(dot);
+          pill.appendChild(txt);
+
+          if (!['personal', 'work', 'home', 'urgent'].includes(id)) {
+            const del = document.createElement('button');
+            del.type = "button";
+            del.className = "text-[#52525b] hover:text-rose-400 p-0.5 ml-0.5 rounded transition";
+            del.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-2.5 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+            del.onclick = () => {
+              Object.keys(tasksVault).forEach(k => {
+                tasksVault[k] = tasksVault[k].filter(t => t.catId !== id);
+                if (tasksVault[k].length === 0) delete tasksVault[k];
+              });
+              delete categoriesVault[id];
+              syncMasterApplicationUI();
+            };
+            pill.appendChild(del);
+          }
+          dock.appendChild(pill);
+        });
+      }
+
+      function renderRightTaskFeed() {
+        const bucket = document.getElementById('task-feed-bucket');
+        const headerTitle = document.getElementById('feed-header-title');
+        const dateBadge = document.getElementById('feed-date-string');
+        if (!bucket || !headerTitle || !dateBadge) return;
+        bucket.innerHTML = '';
+
+        let processingList = [];
+
+        if (currentViewMode === "tasks-only") {
+          headerTitle.innerText = "All Workspace Logs";
+          dateBadge.innerText = "Timeline View";
+
+          Object.keys(tasksVault).forEach(dateKey => {
+            if (Array.isArray(tasksVault[dateKey])) {
+              tasksVault[dateKey].forEach(t => {
+                processingList.push({ ...t, originDate: dateKey });
+              });
+            }
+          });
+
+          processingList.sort((a, b) => {
+            const compA = `${a.originDate}T${a.time || "00:00"}`;
+            const compB = `${b.originDate}T${b.time || "00:00"}`;
+            return compA.localeCompare(compB);
+          });
+
+        } else {
+          headerTitle.innerText = "Today's Agenda";
+          if (!highlightedDateStr) return;
+          const parsed = highlightedDateStr.split('-');
+          const dObj = new Date(parsed[0], parsed[1] - 1, parsed[2]);
+          dateBadge.innerText = isNaN(dObj.getTime()) ? "---" : dObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          
+          const rawDayItems = tasksVault[highlightedDateStr] || [];
+          processingList = [...rawDayItems].sort((a, b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+        }
+
+        if (processingList.length === 0) {
+          bucket.innerHTML = `
+            <div class="py-6 border border-dashed border-[#16161f] rounded-xl flex flex-col items-center justify-center text-center p-4">
+              <span class="text-xs font-semibold text-[#4a4a52]">Horizon is Quiet</span>
+              <p class="text-[10px] text-[#33333a] mt-0.5">No active items located.</p>
+            </div>`;
+          return;
+        }
+
+        processingList.forEach(task => {
+          const catMeta = categoriesVault[task.catId] || { name: 'Custom', color: '#71717a' };
+          const card = document.createElement('div');
+          card.className = `bg-[#0b0b0e] border border-[#16161f] p-3 rounded-xl flex items-center justify-between gap-2.5 relative overflow-hidden transition-all ${task.completed ? 'opacity-40' : ''}`;
+          
+          const strip = document.createElement('span');
+          strip.className = "absolute left-0 top-0 bottom-0 w-1";
+          strip.style.backgroundColor = catMeta.color;
+          card.appendChild(strip);
+
+          const textWrapper = document.createElement('div');
+          textWrapper.className = "space-y-0.5 min-w-0 grow pl-1";
+          
+          const titleStyle = task.completed ? "line-through text-[#52525b]" : "text-white";
+          const activeDateTargetKey = currentViewMode === "tasks-only" ? task.originDate : highlightedDateStr;
+          const remainingCountdownLabel = generateRelativeCountdownText(activeDateTargetKey, task.time);
+
+          textWrapper.innerHTML = `
+            <h4 class="text-xs font-semibold truncate ${titleStyle}">${task.title}</h4>
+            <div class="flex items-center gap-1.5 text-[9px] text-[#71717a] font-mono">
+              <span class="text-indigo-400 font-bold">${remainingCountdownLabel}</span>
+              <span>&bull;</span>
+              <span class="text-[#52525b]">${task.time || "00:00"}</span>
+              <span>&bull;</span>
+              <span class="font-sans px-1 rounded-[3px] text-[8px] uppercase font-bold" style="color: ${catMeta.color}; background-color: ${catMeta.color}15; border: 1px solid ${catMeta.color}20">${catMeta.name}</span>
+            </div>`;
+
+          const controlsGroup = document.createElement('div');
+          controlsGroup.className = "flex items-center gap-1.5 shrink-0";
+
+          // HIGH-CONTRAST VISIBLE DONE BUTTON (Fixed your red circle)
+          const doneBtn = document.createElement('button');
+          doneBtn.type = "button";
+          doneBtn.className = `px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition shrink-0 active:scale-90 ${task.completed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-[#181825] border border-zinc-700/80 text-zinc-200 hover:text-white'}`;
+          doneBtn.innerText = "Done";
+          doneBtn.onclick = (e) => {
+            e.stopPropagation();
+            const originalTargetDate = currentViewMode === "tasks-only" ? task.originDate : highlightedDateStr;
+            const liveTaskRef = tasksVault[originalTargetDate].find(t => t.id === task.id);
+            if (liveTaskRef) {
+              liveTaskRef.completed = !liveTaskRef.completed;
+              syncMasterApplicationUI();
+            }
+          };
+
+          // HIGH-CONTRAST VISIBLE EDIT BUTTON (Fixed your red circle)
+          const editBtn = document.createElement('button');
+          editBtn.type = "button";
+          editBtn.className = "text-[10px] font-bold uppercase tracking-wider text-indigo-400 hover:text-indigo-300 px-2 py-1 bg-indigo-950/40 border border-indigo-900/60 rounded-lg transition active:scale-90 shrink-0";
+          editBtn.innerText = "Edit";
+          editBtn.onclick = (e) => {
+            e.stopPropagation();
+            const targetContextDate = currentViewMode === "tasks-only" ? task.originDate : highlightedDateStr;
+            initiateTaskEditFlow(task, targetContextDate, card);
+          };
+
+          // Delete Icon
+          const delBtn = document.createElement('button');
+          delBtn.type = "button";
+          delBtn.className = "text-[#4a4a58] hover:text-rose-400 p-1.5 rounded-lg transition shrink-0";
+          delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>`;
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            const originalTargetDate = currentViewMode === "tasks-only" ? task.originDate : highlightedDateStr;
+            tasksVault[originalTargetDate] = tasksVault[originalTargetDate].filter(t => t.id !== task.id);
+            if (tasksVault[originalTargetDate].length === 0) delete tasksVault[originalTargetDate];
+            if (activeEditingTaskId === task.id) closeSchedulerModal();
+            syncMasterApplicationUI();
+          };
+
+          controlsGroup.appendChild(doneBtn);
+          controlsGroup.appendChild(editBtn);
+          controlsGroup.appendChild(delBtn);
+
+          card.appendChild(textWrapper);
+          card.appendChild(controlsGroup);
+          bucket.appendChild(card);
+        });
+      }
+
+      function initiateTaskEditFlow(taskObject, dateContextKey, UIAnchorElement) {
+        activeEditingTaskId = taskObject.id;
+        activeEditingTaskDate = dateContextKey;
+
+        const titleInp = document.getElementById('task-title-input');
+        const timeInp = document.getElementById('task-time-input');
+        const winTitle = document.getElementById('modal-window-title');
+        const catInp = document.getElementById('task-category-input');
+
+        if (titleInp) titleInp.value = taskObject.title;
+        if (timeInp) timeInp.value = taskObject.time || "00:00";
+        if (winTitle) winTitle.innerText = "Modify Scheduled Task";
+        
+        openSchedulerModal(dateContextKey, UIAnchorElement);
+        if (catInp) catInp.value = taskObject.catId;
+      }
+
+      function openSchedulerModal(dateTargetStr, anchorElement) {
+        const modal = document.getElementById('add-task-modal');
+        const dropdown = document.getElementById('task-category-input');
+        const master = document.getElementById('master-workspace');
+        if (!modal || !dropdown || !master) return;
+        
+        const parts = dateTargetStr.split('-');
+        const modalDateDisp = document.getElementById('modal-date-display');
+        if (modalDateDisp) {
+          modalDateDisp.innerText = new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('en-US', { dateStyle: 'medium' });
+        }
+
+        dropdown.innerHTML = '';
+        Object.keys(categoriesVault).forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.innerText = categoriesVault[id].name;
+          dropdown.appendChild(opt);
+        });
+
+        const mRect = master.getBoundingClientRect();
+        const cRect = anchorElement.getBoundingClientRect();
+        
+        const currentScroll = master.scrollTop || 0; 
+        const topOffset = (cRect.bottom - mRect.top) + currentScroll;
+        const leftOffset = cRect.left - mRect.left;
+
+        modal.style.top = `${topOffset + 6}px`;
+        let fLeft = leftOffset - 90; 
+        if (fLeft + 270 > mRect.width) fLeft = mRect.width - 280;
+        if (fLeft < 10) fLeft = 10;
+
+        modal.style.left = `${fLeft}px`;
+        modal.classList.remove('hidden');
+      }
+
+      function closeSchedulerModal() {
+        const modal = document.getElementById('add-task-modal');
+        if (modal) modal.classList.add('hidden');
+        const form = document.getElementById('task-composition-form');
+        if (form) form.reset();
+        
+        activeEditingTaskId = null;
+        activeEditingTaskDate = null;
+        const winTitle = document.getElementById('modal-window-title');
+        if (winTitle) winTitle.innerText = "Schedule Agenda Node";
+      }
+
+      const viewToggle = document.getElementById('btn-view-toggle');
+      if (viewToggle) {
+        viewToggle.onclick = function() {
+          const gridWrapper = document.getElementById('calendar-grid-wrapper');
+          const controlsBlock = document.getElementById('calendar-controls');
+          if (!gridWrapper || !controlsBlock) return;
+          
+          if (currentViewMode === "calendar") {
+            currentViewMode = "tasks-only";
+            this.innerText = "Show Calendar";
+            gridWrapper.classList.add('hidden');
+            controlsBlock.classList.add('opacity-10', 'pointer-events-none');
+          } else {
+            currentViewMode = "calendar";
+            this.innerText = "Task Only";
+            gridWrapper.classList.remove('hidden');
+            controlsBlock.classList.remove('opacity-10', 'pointer-events-none');
+          }
+          closeSchedulerModal();
+          syncMasterApplicationUI();
+        };
+      }
+
+      const prevMonth = document.getElementById('btn-prev-month');
+      if (prevMonth) {
+        prevMonth.onclick = () => {
+          focusDateInstance.setMonth(focusDateInstance.getMonth() - 1);
+          closeSchedulerModal();
+          renderCalendarViewport();
+        };
+      }
+
+      const nextMonth = document.getElementById('btn-next-month');
+      if (nextMonth) {
+        nextMonth.onclick = () => {
+          focusDateInstance.setMonth(focusDateInstance.getMonth() + 1);
+          closeSchedulerModal();
+          renderCalendarViewport();
+        };
+      }
+
+      const todayBtn = document.getElementById('btn-today');
+      if (todayBtn) {
+        todayBtn.onclick = () => {
+          const today = new Date();
+          focusDateInstance = new Date(today.getFullYear(), today.getMonth(), 1);
+          highlightedDateStr = convertToDataKey(today.getFullYear(), today.getMonth(), today.getDate());
+          closeSchedulerModal();
+          syncMasterApplicationUI();
+        };
+      }
+
+      const closeModal = document.getElementById('btn-close-modal');
+      if (closeModal) closeModal.onclick = closeSchedulerModal;
+
+      const addCat = document.getElementById('btn-add-cat');
+      if (addCat) {
+        addCat.onclick = () => {
+          const nameInput = document.getElementById('new-cat-name');
+          const colorInput = document.getElementById('new-cat-color');
+          if (!nameInput || !colorInput) return;
+          const txt = nameInput.value.trim();
+          if (!txt) return;
+          const id = 'cat_' + Date.now();
+          categoriesVault[id] = { name: txt, color: colorInput.value };
+          nameInput.value = '';
+          syncMasterApplicationUI();
+        };
+      }
+
+      const compForm = document.getElementById('task-composition-form');
+      if (compForm) {
+        compForm.onsubmit = (e) => {
+          e.preventDefault();
+          const titleInp = document.getElementById('task-title-input');
+          const timeInp = document.getElementById('task-time-input');
+          const catInp = document.getElementById('task-category-input');
+          if (!titleInp || !timeInp || !catInp) return;
+
+          const title = titleInp.value.trim();
+          const time = timeInp.value;
+          const catId = catInp.value;
+
+          if (!title) return;
+
+          if (activeEditingTaskId) {
+            const initialSavedGroup = tasksVault[activeEditingTaskDate] || [];
+            const referenceTarget = initialSavedGroup.find(t => t.id === activeEditingTaskId);
+            if (referenceTarget) {
+              referenceTarget.title = title;
+              referenceTarget.time = time;
+              referenceTarget.catId = catId;
+            }
+          } else {
+            if (!tasksVault[highlightedDateStr]) tasksVault[highlightedDateStr] = [];
+            tasksVault[highlightedDateStr].push({ 
+              id: 'task_' + Date.now(), 
+              title: title, 
+              time: time, 
+              catId: catId,
+              completed: false 
+            });
+          }
+          
+          closeSchedulerModal();
+          syncMasterApplicationUI();
+        };
+      }
+
+      const initialToday = new Date();
+      highlightedDateStr = convertToDataKey(initialToday.getFullYear(), initialToday.getMonth(), initialToday.getDate());
+      syncMasterApplicationUI();
+    });
+  </script>
+</body>
+</html>
