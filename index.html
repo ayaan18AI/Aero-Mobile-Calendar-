@@ -39,7 +39,7 @@
     <div id="master-workspace" class="w-full bg-[#050507]/95 border border-[#16161e] rounded-3xl shadow-2xl shadow-black flex flex-col min-h-[85vh] backdrop-blur-md relative p-4 space-y-4">
       
       <div class="flex items-center justify-between gap-2 shrink-0">
-        <h2 id="month-year-display" class="text-base font-bold text-white tracking-tight">July 2026</h2>
+        <h2 id="month-year-display" class="text-base font-bold text-white tracking-tight">Loading...</h2>
         
         <div id="calendar-controls" class="flex items-center gap-1 bg-[#0b0b0e] border border-[#16161f] p-1 rounded-xl shadow-inner">
           <button id="btn-prev-month" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#13131a] text-[#a1a1aa] hover:text-white transition active:scale-95">
@@ -111,7 +111,7 @@
   </div>
 
   <script>
-    (function() {
+    window.addEventListener('DOMContentLoaded', () => {
       let focusDateInstance = new Date();
       focusDateInstance.setDate(1); 
       
@@ -141,14 +141,12 @@
         return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       }
 
-      // Safe, Crash-Proof Relative Countdown Engine
       function generateRelativeCountdownText(dateKeyStr, timeStr) {
         if (!dateKeyStr || !timeStr || !timeStr.includes(':')) return "Today";
         try {
           const liveClock = new Date();
           const dateParts = dateKeyStr.split('-');
           const timeParts = timeStr.split(':');
-          
           if (dateParts.length < 3 || timeParts.length < 2) return "Today";
 
           const destinationTimestamp = new Date(
@@ -196,7 +194,6 @@
 
         const y = focusDateInstance.getFullYear();
         const m = focusDateInstance.getMonth();
-        
         displayLabel.innerText = `${monthNamesRef[m]} ${y}`;
 
         const firstWeekdayOffset = new Date(y, m, 1).getDay();
@@ -323,7 +320,6 @@
             }
           });
 
-          // Absolute Chronological Sorting Engine (Strict Timeline Order)
           processingList.sort((a, b) => {
             const compA = `${a.originDate}T${a.time || "00:00"}`;
             const compB = `${b.originDate}T${b.time || "00:00"}`;
@@ -374,4 +370,240 @@
               <span>&bull;</span>
               <span class="text-[#52525b]">${task.time || "00:00"}</span>
               <span>&bull;</span>
-              <span class="font-sans px-1 rounded-[3px] text-[8px] uppercase f
+              <span class="font-sans px-1 rounded-[3px] text-[8px] uppercase font-bold" style="color: ${catMeta.color}; background-color: ${catMeta.color}15; border: 1px solid ${catMeta.color}20">${catMeta.name}</span>
+            </div>`;
+
+          const controlsGroup = document.createElement('div');
+          controlsGroup.className = "flex items-center gap-1.5 shrink-0";
+
+          // HIGH-CONTRAST VISIBLE DONE BUTTON (Fixed your red circle)
+          const doneBtn = document.createElement('button');
+          doneBtn.type = "button";
+          doneBtn.className = `px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition shrink-0 active:scale-90 ${task.completed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-[#181825] border border-zinc-700/80 text-zinc-200 hover:text-white'}`;
+          doneBtn.innerText = "Done";
+          doneBtn.onclick = (e) => {
+            e.stopPropagation();
+            const originalTargetDate = currentViewMode === "tasks-only" ? task.originDate : highlightedDateStr;
+            const liveTaskRef = tasksVault[originalTargetDate].find(t => t.id === task.id);
+            if (liveTaskRef) {
+              liveTaskRef.completed = !liveTaskRef.completed;
+              syncMasterApplicationUI();
+            }
+          };
+
+          // HIGH-CONTRAST VISIBLE EDIT BUTTON (Fixed your red circle)
+          const editBtn = document.createElement('button');
+          editBtn.type = "button";
+          editBtn.className = "text-[10px] font-bold uppercase tracking-wider text-indigo-400 hover:text-indigo-300 px-2 py-1 bg-indigo-950/40 border border-indigo-900/60 rounded-lg transition active:scale-90 shrink-0";
+          editBtn.innerText = "Edit";
+          editBtn.onclick = (e) => {
+            e.stopPropagation();
+            const targetContextDate = currentViewMode === "tasks-only" ? task.originDate : highlightedDateStr;
+            initiateTaskEditFlow(task, targetContextDate, card);
+          };
+
+          // Delete Icon
+          const delBtn = document.createElement('button');
+          delBtn.type = "button";
+          delBtn.className = "text-[#4a4a58] hover:text-rose-400 p-1.5 rounded-lg transition shrink-0";
+          delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>`;
+          delBtn.onclick = (e) => {
+            e.stopPropagation();
+            const originalTargetDate = currentViewMode === "tasks-only" ? task.originDate : highlightedDateStr;
+            tasksVault[originalTargetDate] = tasksVault[originalTargetDate].filter(t => t.id !== task.id);
+            if (tasksVault[originalTargetDate].length === 0) delete tasksVault[originalTargetDate];
+            if (activeEditingTaskId === task.id) closeSchedulerModal();
+            syncMasterApplicationUI();
+          };
+
+          controlsGroup.appendChild(doneBtn);
+          controlsGroup.appendChild(editBtn);
+          controlsGroup.appendChild(delBtn);
+
+          card.appendChild(textWrapper);
+          card.appendChild(controlsGroup);
+          bucket.appendChild(card);
+        });
+      }
+
+      function initiateTaskEditFlow(taskObject, dateContextKey, UIAnchorElement) {
+        activeEditingTaskId = taskObject.id;
+        activeEditingTaskDate = dateContextKey;
+
+        const titleInp = document.getElementById('task-title-input');
+        const timeInp = document.getElementById('task-time-input');
+        const winTitle = document.getElementById('modal-window-title');
+        const catInp = document.getElementById('task-category-input');
+
+        if (titleInp) titleInp.value = taskObject.title;
+        if (timeInp) timeInp.value = taskObject.time || "00:00";
+        if (winTitle) winTitle.innerText = "Modify Scheduled Task";
+        
+        openSchedulerModal(dateContextKey, UIAnchorElement);
+        if (catInp) catInp.value = taskObject.catId;
+      }
+
+      function openSchedulerModal(dateTargetStr, anchorElement) {
+        const modal = document.getElementById('add-task-modal');
+        const dropdown = document.getElementById('task-category-input');
+        const master = document.getElementById('master-workspace');
+        if (!modal || !dropdown || !master) return;
+        
+        const parts = dateTargetStr.split('-');
+        const modalDateDisp = document.getElementById('modal-date-display');
+        if (modalDateDisp) {
+          modalDateDisp.innerText = new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('en-US', { dateStyle: 'medium' });
+        }
+
+        dropdown.innerHTML = '';
+        Object.keys(categoriesVault).forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.innerText = categoriesVault[id].name;
+          dropdown.appendChild(opt);
+        });
+
+        const mRect = master.getBoundingClientRect();
+        const cRect = anchorElement.getBoundingClientRect();
+        
+        const currentScroll = master.scrollTop || 0; 
+        const topOffset = (cRect.bottom - mRect.top) + currentScroll;
+        const leftOffset = cRect.left - mRect.left;
+
+        modal.style.top = `${topOffset + 6}px`;
+        let fLeft = leftOffset - 90; 
+        if (fLeft + 270 > mRect.width) fLeft = mRect.width - 280;
+        if (fLeft < 10) fLeft = 10;
+
+        modal.style.left = `${fLeft}px`;
+        modal.classList.remove('hidden');
+      }
+
+      function closeSchedulerModal() {
+        const modal = document.getElementById('add-task-modal');
+        if (modal) modal.classList.add('hidden');
+        const form = document.getElementById('task-composition-form');
+        if (form) form.reset();
+        
+        activeEditingTaskId = null;
+        activeEditingTaskDate = null;
+        const winTitle = document.getElementById('modal-window-title');
+        if (winTitle) winTitle.innerText = "Schedule Agenda Node";
+      }
+
+      const viewToggle = document.getElementById('btn-view-toggle');
+      if (viewToggle) {
+        viewToggle.onclick = function() {
+          const gridWrapper = document.getElementById('calendar-grid-wrapper');
+          const controlsBlock = document.getElementById('calendar-controls');
+          if (!gridWrapper || !controlsBlock) return;
+          
+          if (currentViewMode === "calendar") {
+            currentViewMode = "tasks-only";
+            this.innerText = "Show Calendar";
+            gridWrapper.classList.add('hidden');
+            controlsBlock.classList.add('opacity-10', 'pointer-events-none');
+          } else {
+            currentViewMode = "calendar";
+            this.innerText = "Task Only";
+            gridWrapper.classList.remove('hidden');
+            controlsBlock.classList.remove('opacity-10', 'pointer-events-none');
+          }
+          closeSchedulerModal();
+          syncMasterApplicationUI();
+        };
+      }
+
+      const prevMonth = document.getElementById('btn-prev-month');
+      if (prevMonth) {
+        prevMonth.onclick = () => {
+          focusDateInstance.setMonth(focusDateInstance.getMonth() - 1);
+          closeSchedulerModal();
+          renderCalendarViewport();
+        };
+      }
+
+      const nextMonth = document.getElementById('btn-next-month');
+      if (nextMonth) {
+        nextMonth.onclick = () => {
+          focusDateInstance.setMonth(focusDateInstance.getMonth() + 1);
+          closeSchedulerModal();
+          renderCalendarViewport();
+        };
+      }
+
+      const todayBtn = document.getElementById('btn-today');
+      if (todayBtn) {
+        todayBtn.onclick = () => {
+          const today = new Date();
+          focusDateInstance = new Date(today.getFullYear(), today.getMonth(), 1);
+          highlightedDateStr = convertToDataKey(today.getFullYear(), today.getMonth(), today.getDate());
+          closeSchedulerModal();
+          syncMasterApplicationUI();
+        };
+      }
+
+      const closeModal = document.getElementById('btn-close-modal');
+      if (closeModal) closeModal.onclick = closeSchedulerModal;
+
+      const addCat = document.getElementById('btn-add-cat');
+      if (addCat) {
+        addCat.onclick = () => {
+          const nameInput = document.getElementById('new-cat-name');
+          const colorInput = document.getElementById('new-cat-color');
+          if (!nameInput || !colorInput) return;
+          const txt = nameInput.value.trim();
+          if (!txt) return;
+          const id = 'cat_' + Date.now();
+          categoriesVault[id] = { name: txt, color: colorInput.value };
+          nameInput.value = '';
+          syncMasterApplicationUI();
+        };
+      }
+
+      const compForm = document.getElementById('task-composition-form');
+      if (compForm) {
+        compForm.onsubmit = (e) => {
+          e.preventDefault();
+          const titleInp = document.getElementById('task-title-input');
+          const timeInp = document.getElementById('task-time-input');
+          const catInp = document.getElementById('task-category-input');
+          if (!titleInp || !timeInp || !catInp) return;
+
+          const title = titleInp.value.trim();
+          const time = timeInp.value;
+          const catId = catInp.value;
+
+          if (!title) return;
+
+          if (activeEditingTaskId) {
+            const initialSavedGroup = tasksVault[activeEditingTaskDate] || [];
+            const referenceTarget = initialSavedGroup.find(t => t.id === activeEditingTaskId);
+            if (referenceTarget) {
+              referenceTarget.title = title;
+              referenceTarget.time = time;
+              referenceTarget.catId = catId;
+            }
+          } else {
+            if (!tasksVault[highlightedDateStr]) tasksVault[highlightedDateStr] = [];
+            tasksVault[highlightedDateStr].push({ 
+              id: 'task_' + Date.now(), 
+              title: title, 
+              time: time, 
+              catId: catId,
+              completed: false 
+            });
+          }
+          
+          closeSchedulerModal();
+          syncMasterApplicationUI();
+        };
+      }
+
+      const initialToday = new Date();
+      highlightedDateStr = convertToDataKey(initialToday.getFullYear(), initialToday.getMonth(), initialToday.getDate());
+      syncMasterApplicationUI();
+    });
+  </script>
+</body>
+</html>
